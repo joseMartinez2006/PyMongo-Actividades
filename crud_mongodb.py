@@ -166,6 +166,41 @@ def eliminar_empleado():
     else:
         print("Operación cancelada.")
 
+def buscar_empleados_embedding():
+    print("\n========== BUSCAR EMPLEADOS - EMBEDDING ==========")
+
+    nombre = input("Nombre del empleado a buscar: ").upper()
+
+    empleados = emp_embedding.find({"ename": nombre}).sort("empno", 1)
+
+    encontrados = 0
+
+    for empleado in empleados:
+        dept = empleado["dept"]
+
+        print(f"\nNúmero: {empleado['empno']}")
+        print(f"Nombre: {empleado['ename']}")
+        print(f"Puesto: {empleado['job']}")
+        print(f"Salario: {empleado['sal']}")
+        print(f"Departamento: {dept['deptno']}")
+        print(f"Nombre departamento: {dept['dname']}")
+        print(f"Ubicación: {dept['loc']}")
+        print("--------------------------------")
+
+        encontrados += 1
+
+    if encontrados == 0:
+        print("No se encontraron empleados con ese nombre.")
+
+
+def contar_empleados_embedding():
+    print("\n========== CONTAR EMPLEADOS - EMBEDDING ==========")
+
+    puesto = input("Puesto para filtrar: ").upper()
+
+    cantidad = emp_embedding.count_documents({"job": puesto})
+
+    print("Cantidad de empleados:", cantidad)
 
 def menu_embedding():
     while True:
@@ -174,7 +209,9 @@ def menu_embedding():
         print("2. Consultar empleados")
         print("3. Actualizar empleado")
         print("4. Eliminar empleado")
-        print("5. Volver al menú principal")
+        print("5. Buscar empleados")
+        print("6. Contar empleados por puesto")
+        print("7. Volver al menú principal")
 
         opcion = input("Selecciona una opción: ")
 
@@ -187,6 +224,10 @@ def menu_embedding():
         elif opcion == "4":
             eliminar_empleado()
         elif opcion == "5":
+            buscar_empleados_embedding()
+        elif opcion == "6":
+            contar_empleados_embedding()
+        elif opcion == "7":
             break
         else:
             print("Opción no válida.")
@@ -352,6 +393,58 @@ def eliminar_empleado_linking():
     else:
         print("Operación cancelada.")
 
+def buscar_empleados_linking():
+    print("\n========== BUSCAR EMPLEADOS - LINKING ==========")
+
+    nombre = input("Nombre del empleado a buscar: ").upper()
+
+    pipeline = [
+        {"$match": {"ename": nombre}},
+        {
+            "$lookup": {
+                "from": "dept",
+                "localField": "deptno",
+                "foreignField": "deptno",
+                "as": "departamento"
+            }
+        },
+        {"$sort": {"empno": 1}}
+    ]
+
+    encontrados = 0
+
+    for empleado in emp_linking.aggregate(pipeline):
+        print(f"\nNúmero: {empleado['empno']}")
+        print(f"Nombre: {empleado['ename']}")
+        print(f"Puesto: {empleado['job']}")
+        print(f"Salario: {empleado['sal']}")
+        print(f"Número de departamento: {empleado['deptno']}")
+
+        departamentos = empleado.get("departamento", [])
+
+        if departamentos:
+            dept = departamentos[0]
+            print(f"Nombre departamento: {dept['dname']}")
+            print(f"Ubicación: {dept['loc']}")
+        else:
+            print("Departamento no encontrado.")
+
+        print("--------------------------------")
+        encontrados += 1
+
+    if encontrados == 0:
+        print("No se encontraron empleados con ese nombre.")
+
+
+def contar_empleados_linking():
+    print("\n========== CONTAR EMPLEADOS - LINKING ==========")
+
+    puesto = input("Puesto para filtrar: ").upper()
+
+    cantidad = emp_linking.count_documents({"job": puesto})
+
+    print("Cantidad de empleados:", cantidad)
+
 
 def menu_linking():
     while True:
@@ -360,7 +453,9 @@ def menu_linking():
         print("2. Consultar empleados")
         print("3. Actualizar empleado")
         print("4. Eliminar empleado")
-        print("5. Volver al menú principal")
+        print("5. Buscar empleados")
+        print("6. Contar empleados por puesto")
+        print("7. Volver al menú principal")
 
         opcion = input("Selecciona una opción: ")
 
@@ -373,6 +468,10 @@ def menu_linking():
         elif opcion == "4":
             eliminar_empleado_linking()
         elif opcion == "5":
+            buscar_empleados_linking()
+        elif opcion == "6":
+            contar_empleados_linking()
+        elif opcion == "7":
             break
         else:
             print("Opción no válida.")
